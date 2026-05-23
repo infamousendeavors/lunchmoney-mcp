@@ -36,7 +36,9 @@ export function createAuthProvider(options: AuthProviderOptions) {
         clientSecret,
         baseUrl,
         scopes: ["openid", "email"],
-        consentRequired: false,
+        // consentRequired left at the provider default so Google shows its
+        // consent screen on first-time grants. Disabling it (0.2.x did) raised
+        // silent-grant / phishing risk for a server holding financial data.
         ...(options.tokenStorage && { tokenStorage: options.tokenStorage }),
         ...(options.encryptionKey !== undefined && { encryptionKey: options.encryptionKey }),
       });

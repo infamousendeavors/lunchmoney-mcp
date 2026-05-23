@@ -23,7 +23,7 @@ These credentials are:
 When running in HTTP mode with OAuth, session tokens (access tokens, refresh tokens, authorization codes) are stored on disk for persistence across server restarts.
 
 - **Encryption:** AES-256-GCM (authenticated encryption)
-- **Encryption key:** Stored in the OS keychain (Tier 1) -- the encrypted files are useless without it
+- **Encryption key:** Stored in the OS keychain (Tier 1), or supplied via the `ENCRYPTION_KEY` env var when no keychain is available (see below) -- the encrypted files are useless without it
 - **Location:** Platform-native data directory
   - macOS: `~/Library/Application Support/lunchmoney-mcp/`
   - Linux: `~/.local/share/lunchmoney-mcp/`
@@ -42,6 +42,20 @@ For containerized deployments (Docker, Kubernetes) where no OS keychain is avail
 
 **Important:** When using ENV vars, ensure your deployment platform encrypts environment variables at rest (Railway, Render, and Fly.io all do this by default).
 
+### Encryption Key (`ENCRYPTION_KEY`)
+
+In HTTP/OAuth mode the session store is encrypted with a stable key. The key is resolved in this order:
+
+1. **OS keychain** -- generated and persisted automatically on first run.
+2. **`ENCRYPTION_KEY` env var** -- used when the keychain is unavailable (containers, headless hosts).
+
+Requirements and behavior (as of 0.3.0):
+
+- **Format:** exactly 64 lowercase hexadecimal characters (32 bytes). An invalid value is a hard error -- the server refuses to start rather than run with a misconfigured key.
+- **Generate one:** `openssl rand -hex 32`
+- **Refuse, don't drift:** if the keychain is unavailable *and* `ENCRYPTION_KEY` is unset, the server **refuses to start in HTTP/OAuth mode**. Earlier versions silently generated an ephemeral key, which invalidated every stored session on each restart. Stdio mode has no persisted sessions, so it still allows an ephemeral key.
+- **Rotation:** in container deployments, set a new `ENCRYPTION_KEY` and restart. In keychain deployments, delete the `encryption-key` entry under the `lunchmoney-mcp` service in your OS credential manager and restart (a fresh key is generated). Rotating the key invalidates existing encrypted sessions; users re-authenticate on next use. Rotate if you suspect the key was exposed.
+
 ## Threat Model
 
 | Threat | Mitigation |
@@ -53,6 +67,8 @@ For containerized deployments (Docker, Kubernetes) where no OS keychain is avail
 | ENV var exposure in containers | Use platform-provided secret management; never log ENV vars |
 | Man-in-the-middle on API calls | All API calls use HTTPS; OAuth uses PKCE |
 | Unauthorized MCP access (HTTP mode) | OAuth 2.1 with PKCE required for all authenticated endpoints |
+| Silent/phishing OAuth grant | Consent required on every first-time grant (Google consent screen not suppressed) |
+| Lost encryption key in containers | Server refuses to start without a valid `ENCRYPTION_KEY` in HTTP/OAuth mode (no silent ephemeral key) |
 
 ## Supply Chain Security
 

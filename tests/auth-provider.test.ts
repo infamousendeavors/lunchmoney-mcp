@@ -60,9 +60,22 @@ describe("auth-provider", () => {
         clientSecret: "google-client-secret",
         baseUrl: "http://localhost:8080",
         scopes: ["openid", "email"],
-        consentRequired: false,
       });
       expect(result).toHaveProperty("type", "google");
+    });
+
+    it("does not disable the Google consent screen", () => {
+      createAuthProvider({
+        provider: "google",
+        baseUrl: "http://localhost:8080",
+        clientId: "google-client-id",
+        clientSecret: "google-client-secret",
+      });
+
+      const config = mocks.GoogleProviderMock.mock.calls[0][0];
+      // Security: consentRequired:false was removed in 0.3.0 so Google shows
+      // its consent screen on first-time grants (anti silent-grant / phishing).
+      expect(config.consentRequired).not.toBe(false);
     });
 
     it("creates a GitHub provider with correct config", () => {

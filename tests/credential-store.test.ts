@@ -148,16 +148,35 @@ describe("CredentialStore", () => {
       );
     });
 
-    it("falls back to ENCRYPTION_KEY env var when keychain throws", async () => {
+    it("returns a valid ENCRYPTION_KEY env var when keychain throws", async () => {
+      const validKey = "a".repeat(64);
       mockKeytar.getPassword.mockRejectedValue(new Error("Keychain locked"));
-      process.env.ENCRYPTION_KEY = "env-encryption-key";
+      process.env.ENCRYPTION_KEY = validKey;
 
       const key = await store.getEncryptionKey();
 
-      expect(key).toBe("env-encryption-key");
+      expect(key).toBe(validKey);
     });
 
-    it("generates ephemeral key when keychain throws and no env var", async () => {
+    it("throws when ENCRYPTION_KEY is set but not 64 lowercase hex chars", async () => {
+      mockKeytar.getPassword.mockRejectedValue(new Error("Keychain locked"));
+      process.env.ENCRYPTION_KEY = "too-short";
+
+      await expect(store.getEncryptionKey()).rejects.toThrow(/64 lowercase hex/);
+    });
+
+    it("logs a warning to stderr when the keychain is unavailable", async () => {
+      const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockKeytar.getPassword.mockRejectedValue(new Error("Keychain locked"));
+      process.env.ENCRYPTION_KEY = "a".repeat(64);
+
+      await store.getEncryptionKey();
+
+      expect(errSpy).toHaveBeenCalled();
+      errSpy.mockRestore();
+    });
+
+    it("generates an ephemeral key in stdio mode (no persistence required)", async () => {
       mockKeytar.getPassword.mockRejectedValue(new Error("Keychain locked"));
       delete process.env.ENCRYPTION_KEY;
 
@@ -165,6 +184,15 @@ describe("CredentialStore", () => {
 
       // Should be a 64-char hex string (32 bytes)
       expect(key).toMatch(/^[a-f0-9]{64}$/);
+    });
+
+    it("refuses to start when persistence is required, keychain is unavailable, and no env key is set", async () => {
+      mockKeytar.getPassword.mockRejectedValue(new Error("Keychain locked"));
+      delete process.env.ENCRYPTION_KEY;
+
+      await expect(
+        store.getEncryptionKey({ requirePersistent: true })
+      ).rejects.toThrow(/encryption key/i);
     });
   });
 
