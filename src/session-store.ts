@@ -48,8 +48,12 @@ export async function createSessionStore(
   // Ensure the data directory exists
   mkdirSync(directory, { recursive: true });
 
-  // Retrieve the encryption key from the OS keychain
-  const encryptionKey = await credentialStore.getEncryptionKey();
+  // Retrieve the encryption key. This store persists OAuth sessions to disk,
+  // so an ephemeral key is not acceptable: require a stable key (keychain or
+  // a valid ENCRYPTION_KEY), and refuse to start otherwise.
+  const encryptionKey = await credentialStore.getEncryptionKey({
+    requirePersistent: true,
+  });
 
   // Create the disk-backed store
   const diskStore = new DiskStore({

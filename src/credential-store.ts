@@ -31,7 +31,22 @@ export class CredentialStore {
     }
   }
 
-  async getEncryptionKey(): Promise<string> {
+  /**
+   * Resolve the AES-256-GCM encryption key for the session store.
+   *
+   * Resolution order:
+   *  1. OS keychain (generated and persisted on first use).
+   *  2. `ENCRYPTION_KEY` env var, validated as exactly 64 lowercase hex
+   *     characters (32 bytes). An invalid value is a hard error.
+   *  3. Ephemeral random key — only allowed when `requirePersistent` is
+   *     false (stdio mode, which has no persisted sessions). In HTTP/OAuth
+   *     mode we refuse to start rather than silently invalidate every
+   *     stored session on the next restart.
+   *
+   * @param requirePersistent - true in HTTP/OAuth mode, where an ephemeral
+   *   key would silently drop all persisted sessions on restart.
+   */
+  async getEncryptionKey({ requirePersistent = false } = {}): Promise<string> {
     try {
       let key = await keytar.getPassword(SERVICE_NAME, 'encryption-key');
       if (!key) {
@@ -41,11 +56,37 @@ export class CredentialStore {
         await keytar.setPassword(SERVICE_NAME, 'encryption-key', key);
       }
       return key;
-    } catch {
-      // Fallback: derive from env or generate ephemeral
-      const crypto = await import('crypto');
-      return process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+    } catch (error) {
+      // Keychain unavailable (Docker, CI, headless). Surface it instead of
+      // swallowing — a silent fall-through here is how sessions vanish.
+      console.error(
+        `[lunchmoney-mcp] OS keychain unavailable for the encryption key (${
+          (error as Error).message
+        }). Falling back to the ENCRYPTION_KEY env var.`
+      );
     }
+
+    const envKey = process.env.ENCRYPTION_KEY;
+    if (envKey !== undefined) {
+      if (!/^[0-9a-f]{64}$/.test(envKey)) {
+        throw new Error(
+          'ENCRYPTION_KEY must be exactly 64 lowercase hex characters (32 bytes). Generate one with: openssl rand -hex 32'
+        );
+      }
+      return envKey;
+    }
+
+    if (requirePersistent) {
+      throw new Error(
+        'No encryption key available: the OS keychain is unavailable and ENCRYPTION_KEY is not set. ' +
+          'Refusing to start in HTTP/OAuth mode because an ephemeral key would silently invalidate every ' +
+          'stored session on restart. Set ENCRYPTION_KEY (openssl rand -hex 32).'
+      );
+    }
+
+    // stdio mode: no persisted sessions, so an ephemeral key is acceptable.
+    const crypto = await import('crypto');
+    return crypto.randomBytes(32).toString('hex');
   }
 
   async clear(): Promise<void> {
