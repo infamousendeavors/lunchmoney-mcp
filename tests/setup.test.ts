@@ -25,7 +25,7 @@ function createJsonResponse(data: unknown, status = 200, ok = true) {
   };
 }
 
-import { runSetupWizard, validateToken } from "../src/setup.js";
+import { runSetupWizard, validateToken, installInputMask } from "../src/setup.js";
 import { CredentialStore } from "../src/credential-store.js";
 import type { ReadlineInterface } from "../src/setup.js";
 
@@ -227,6 +227,41 @@ describe("Setup wizard", () => {
           line.includes("https://my.lunchmoney.app/developers")
         )
       ).toBe(true);
+    });
+  });
+
+  describe("installInputMask", () => {
+    it("returns a no-op when the interface cannot mask (e.g. a mock or non-TTY)", () => {
+      const rl = { question: vi.fn(), close: vi.fn() } as unknown as ReadlineInterface;
+
+      const unmask = installInputMask(rl);
+
+      expect(typeof unmask).toBe("function");
+      expect(() => unmask()).not.toThrow();
+    });
+
+    it("suppresses echoed characters but lets newlines through, and restores on unmask", () => {
+      const written: string[] = [];
+      const original = (s: string) => {
+        written.push(s);
+      };
+      const rl = {
+        question: vi.fn(),
+        close: vi.fn(),
+        _writeToOutput: original,
+      } as unknown as ReadlineInterface;
+
+      const unmask = installInputMask(rl);
+
+      const masked = rl as unknown as { _writeToOutput: (s: string) => void };
+      masked._writeToOutput("s");
+      masked._writeToOutput("ecret");
+      masked._writeToOutput("\n");
+
+      expect(written).toEqual(["\n"]); // typed chars suppressed, newline passed
+
+      unmask();
+      expect(masked._writeToOutput).toBe(original);
     });
   });
 });

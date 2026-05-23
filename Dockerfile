@@ -11,6 +11,16 @@ COPY . .
 RUN npm run build
 RUN npm prune --production
 
+# Run as a non-root user. The session store writes under $HOME (env-paths data
+# dir), so point HOME at the app dir and make it writable by the user. Group
+# root + g+rwX keeps this OpenShift / arbitrary-UID friendly.
+ENV HOME=/app
+RUN useradd -r -u 1001 -g root nodeuser \
+    && mkdir -p /app/.local/share \
+    && chown -R nodeuser:root /app \
+    && chmod -R g+rwX /app
+USER nodeuser
+
 EXPOSE 8080
 
 # Container mode: use ENV vars for credentials (no keychain available)
