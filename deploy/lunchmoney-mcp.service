@@ -7,6 +7,9 @@ Type=simple
 User=lunchmoney
 Group=lunchmoney
 WorkingDirectory=/opt/lunchmoney-mcp
+# Keep the session store ($HOME/.local/share via env-paths) inside ReadWritePaths
+# so ProtectHome=yes below does not block it.
+Environment=HOME=/opt/lunchmoney-mcp
 ExecStart=/usr/bin/node dist/cli.js --http
 EnvironmentFile=/etc/lunchmoney-mcp/env
 Restart=always
@@ -14,6 +17,19 @@ RestartSec=5
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=lunchmoney-mcp
+
+# Hardening (verify with: systemd-analyze security lunchmoney-mcp)
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/lunchmoney-mcp
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
 
 [Install]
 WantedBy=multi-user.target

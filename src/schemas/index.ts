@@ -1,9 +1,17 @@
 import { z } from "zod";
 
+// Lunch Money calendar-date fields are always YYYY-MM-DD. Constrain them once
+// and reuse, so malformed input fails fast here instead of as a confusing
+// upstream API error. (balance_as_of is intentionally NOT this -- LM accepts a
+// full ISO 8601 datetime there.)
+const dateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD");
+
 // Transaction filter schema
 export const transactionFilterSchema = z.object({
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
+  start_date: dateString.optional(),
+  end_date: dateString.optional(),
   category_id: z.number().optional(),
   tag_id: z.number().optional(),
   account_id: z.number().optional(),
@@ -47,7 +55,7 @@ export const updateTagSchema = z.object({
 
 // Transaction schemas
 export const createTransactionSchema = z.object({
-  date: z.string(),
+  date: dateString,
   amount: z.string(),
   payee: z.string().optional(),
   currency: z.string().optional(),
@@ -62,7 +70,7 @@ export const createTransactionSchema = z.object({
 });
 
 export const updateTransactionSchema = z.object({
-  date: z.string().optional(),
+  date: dateString.optional(),
   amount: z.string().optional(),
   payee: z.string().optional(),
   currency: z.string().optional(),
@@ -95,8 +103,8 @@ export const createRecurringItemSchema = z.object({
   tag_id: z.number().optional(),
   frequency: z.string().optional(),
   flow: z.enum(["inflow", "outflow"]).optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
+  start_date: dateString.optional(),
+  end_date: dateString.optional(),
 });
 
 export const updateRecurringItemSchema = z.object({
@@ -109,8 +117,8 @@ export const updateRecurringItemSchema = z.object({
   tag_id: z.number().nullable().optional(),
   frequency: z.string().optional(),
   flow: z.enum(["inflow", "outflow"]).optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
+  start_date: dateString.optional(),
+  end_date: dateString.optional(),
 });
 
 // Budget schemas
@@ -118,16 +126,16 @@ export const createBudgetSchema = z.object({
   category_id: z.number().optional(),
   amount: z.string(),
   currency: z.string().optional(),
-  start_date: z.string(),
-  end_date: z.string(),
+  start_date: dateString,
+  end_date: dateString,
 });
 
 export const updateBudgetSchema = z.object({
   category_id: z.number().nullable().optional(),
   amount: z.string().optional(),
   currency: z.string().optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
+  start_date: dateString.optional(),
+  end_date: dateString.optional(),
 });
 
 // Asset schemas
@@ -153,7 +161,7 @@ export const updateAssetSchema = z.object({
 
 // Transaction group schemas
 export const createTransactionGroupSchema = z.object({
-  date: z.string(),
+  date: dateString,
   payee: z.string(),
   transactions: z.array(z.number()).min(2),
   category_id: z.number().optional(),

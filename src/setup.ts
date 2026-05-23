@@ -15,11 +15,49 @@ export function createReadlineInterface(): ReadlineInterface {
   });
 }
 
-function askQuestion(rl: ReadlineInterface, query: string): Promise<string> {
+/**
+ * Suppress the terminal echo of typed input on a readline interface, so a
+ * secret (the API token) is not printed as it is typed. Returns an `unmask`
+ * function that restores the original behavior.
+ *
+ * Works by swapping the interface's internal `_writeToOutput`: while masked,
+ * only newlines pass through (so Enter still breaks the line) and every echoed
+ * keystroke is swallowed. If the interface does not expose `_writeToOutput`
+ * (a test mock, or a non-TTY stream), this is a no-op.
+ */
+export function installInputMask(rl: ReadlineInterface): () => void {
+  const internal = rl as unknown as { _writeToOutput?: (s: string) => void };
+  const original = internal._writeToOutput;
+  if (typeof original !== "function") {
+    return () => {};
+  }
+  internal._writeToOutput = (stringToWrite: string) => {
+    if (stringToWrite === "\n" || stringToWrite === "\r\n" || stringToWrite === "\r") {
+      original.call(internal, stringToWrite);
+    }
+    // otherwise: swallow the echoed character
+  };
+  return () => {
+    internal._writeToOutput = original;
+  };
+}
+
+function askQuestion(
+  rl: ReadlineInterface,
+  query: string,
+  options: { mask?: boolean } = {}
+): Promise<string> {
   return new Promise((resolve) => {
+    let unmask: (() => void) | undefined;
     rl.question(query, (answer: string) => {
+      unmask?.();
       resolve(answer.trim());
     });
+    // Install the mask after the prompt is written so the prompt stays visible
+    // but the typed token does not echo.
+    if (options.mask) {
+      unmask = installInputMask(rl);
+    }
   });
 }
 
@@ -45,7 +83,9 @@ export async function runSetupWizard(
     print("You can get a token at: https://my.lunchmoney.app/developers");
     print("");
 
-    const token = await askQuestion(rl, "Enter your Lunch Money API token: ");
+    const token = await askQuestion(rl, "Enter your Lunch Money API token (input hidden): ", {
+      mask: true,
+    });
 
     if (!token) {
       print("No token provided. Setup cancelled.");

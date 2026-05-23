@@ -65,10 +65,12 @@ Requirements and behavior (as of 0.3.0):
 | Keychain compromised | Requires OS-level compromise (user login password) |
 | Token in chat history (configureLunchMoneyToken) | Optional -- users can use `npx lunchmoney-mcp setup` CLI instead |
 | ENV var exposure in containers | Use platform-provided secret management; never log ENV vars |
-| Man-in-the-middle on API calls | All API calls use HTTPS; OAuth uses PKCE |
-| Unauthorized MCP access (HTTP mode) | OAuth 2.1 with PKCE required for all authenticated endpoints |
+| Man-in-the-middle on API calls | All API calls use HTTPS; the OAuth flow uses PKCE (see note below) |
+| Unauthorized MCP access (HTTP mode) | OAuth 2.1 with PKCE required for all authenticated endpoints (see note below) |
 | Silent/phishing OAuth grant | Consent required on every first-time grant (Google consent screen not suppressed) |
 | Lost encryption key in containers | Server refuses to start without a valid `ENCRYPTION_KEY` in HTTP/OAuth mode (no silent ephemeral key) |
+
+> **Note on PKCE:** the OAuth authorization flow (including PKCE / `code_challenge`) is implemented by FastMCP, not by this server directly. We rely on the behavior of the pinned `fastmcp` version (currently `3.35.0`) and do not override `code_challenge_method`. Treat the PKCE guarantee as transitive through that dependency; it is re-verified whenever FastMCP is bumped.
 
 ## Supply Chain Security
 
