@@ -99,17 +99,17 @@ npm audit signatures
 **Verify the package source** matches the GitHub repo:
 ```bash
 # Check provenance attestation on npm
-npm view @infamousjoeg/lunchmoney-mcp --json | jq '.dist.attestations'
+npm view @infamousendeavors/lunchmoney-mcp --json | jq '.dist.attestations'
 ```
 
 **Pin your install** to a specific version:
 ```bash
-npm install -g @infamousjoeg/lunchmoney-mcp@0.1.0
+npm install -g @infamousendeavors/lunchmoney-mcp@0.3.0
 ```
 
 **Audit before running:**
 ```bash
-npx @infamousjoeg/lunchmoney-mcp --version  # check version
+npx @infamousendeavors/lunchmoney-mcp --version  # check version
 npm audit                                    # check for known vulnerabilities
 ```
 

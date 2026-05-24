@@ -76,7 +76,7 @@ function initTerminal() {
   const lines = [
     { type: 'command', parts: [
       { cls: 't-prompt', text: '$ ' },
-      { cls: 't-cmd',    text: 'npx @infamousjoeg/lunchmoney-mcp setup' }
+      { cls: 't-cmd',    text: 'npx @infamousendeavors/lunchmoney-mcp setup' }
     ]},
     { type: 'output', parts: [
       { cls: 't-success', text: '✓' },
@@ -89,7 +89,7 @@ function initTerminal() {
     { type: 'blank' },
     { type: 'command', parts: [
       { cls: 't-prompt', text: '$ ' },
-      { cls: 't-cmd',    text: 'npx @infamousjoeg/lunchmoney-mcp' }
+      { cls: 't-cmd',    text: 'npx @infamousendeavors/lunchmoney-mcp' }
     ]},
     { type: 'output', parts: [
       { cls: 't-output', text: 'Lunch Money MCP Server started (stdio)' }
@@ -440,7 +440,7 @@ function initVersionBadge() {
   const badge = $('#version-badge');
   if (!badge) return;
 
-  fetch('https://registry.npmjs.org/@infamousjoeg%2Flunchmoney-mcp/latest')
+  fetch('https://registry.npmjs.org/@infamousendeavors%2Flunchmoney-mcp/latest')
     .then(res => res.ok ? res.json() : null)
     .then(data => {
       if (data && data.version) {

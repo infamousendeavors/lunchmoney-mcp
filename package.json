@@ -1,5 +1,5 @@
 {
-  "name": "@infamousjoeg/lunchmoney-mcp",
+  "name": "@infamousendeavors/lunchmoney-mcp",
   "version": "0.2.0",
   "description": "The definitive MCP server for Lunch Money — local (stdio) and remote (HTTP) with secure credential storage",
   "type": "module",
@@ -35,10 +35,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/infamousjoeg/lunchmoney-mcp.git"
+    "url": "https://github.com/infamousendeavors/lunchmoney-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/infamousjoeg/lunchmoney-mcp/issues"
+    "url": "https://github.com/infamousendeavors/lunchmoney-mcp/issues"
   },
   "homepage": "https://git.joeco.de/lunchmoney-mcp",
   "dependencies": {
