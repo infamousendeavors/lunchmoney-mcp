@@ -1,9 +1,9 @@
 # lunchmoney-mcp
 
-[![npm version](https://img.shields.io/npm/v/@infamousjoeg/lunchmoney-mcp.svg)](https://www.npmjs.com/package/@infamousjoeg/lunchmoney-mcp)
-[![npm downloads](https://img.shields.io/npm/dm/@infamousjoeg/lunchmoney-mcp.svg)](https://www.npmjs.com/package/@infamousjoeg/lunchmoney-mcp)
-[![GitHub downloads](https://img.shields.io/github/downloads/infamousjoeg/lunchmoney-mcp/total.svg)](https://github.com/infamousjoeg/lunchmoney-mcp/releases)
-[![CI](https://github.com/infamousjoeg/lunchmoney-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/infamousjoeg/lunchmoney-mcp/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@infamousendeavors/lunchmoney-mcp.svg)](https://www.npmjs.com/package/@infamousendeavors/lunchmoney-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/@infamousendeavors/lunchmoney-mcp.svg)](https://www.npmjs.com/package/@infamousendeavors/lunchmoney-mcp)
+[![GitHub downloads](https://img.shields.io/github/downloads/infamousendeavors/lunchmoney-mcp/total.svg)](https://github.com/infamousendeavors/lunchmoney-mcp/releases)
+[![CI](https://github.com/infamousendeavors/lunchmoney-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/infamousendeavors/lunchmoney-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 The definitive MCP server for [Lunch Money](https://lunchmoney.app) -- manage your finances through any AI assistant that supports the Model Context Protocol.

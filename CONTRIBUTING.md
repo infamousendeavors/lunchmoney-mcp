@@ -4,7 +4,7 @@
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/infamousjoeg/lunchmoney-mcp.git
+   git clone https://github.com/infamousendeavors/lunchmoney-mcp.git
    cd lunchmoney-mcp
    ```
 
