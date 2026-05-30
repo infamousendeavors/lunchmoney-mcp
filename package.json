@@ -1,6 +1,6 @@
 {
   "name": "@infamousendeavors/lunchmoney-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The definitive MCP server for Lunch Money — local (stdio) and remote (HTTP) with secure credential storage",
   "type": "module",
   "main": "dist/index.js",
@@ -40,7 +40,7 @@
   "bugs": {
     "url": "https://github.com/infamousendeavors/lunchmoney-mcp/issues"
   },
-  "homepage": "https://git.joeco.de/lunchmoney-mcp",
+  "homepage": "https://lunchmoney.infamousendeavors.com",
   "dependencies": {
     "dotenv": "17.4.2",
     "env-paths": "4.0.0",
