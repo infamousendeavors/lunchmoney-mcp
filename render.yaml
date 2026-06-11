@@ -10,6 +10,12 @@ services:
         sync: false
       - key: AUTH_PROVIDER
         value: google
+      # Authorization allow-list (REQUIRED in HTTP mode — the server refuses to
+      # start without one). OAuth only authenticates; this restricts access to
+      # your own account. Set at least one of ALLOWED_EMAILS,
+      # ALLOWED_EMAIL_DOMAINS, or ALLOWED_GITHUB_USERS (comma-separated).
+      - key: ALLOWED_EMAILS
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET

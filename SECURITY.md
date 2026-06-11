@@ -39,6 +39,7 @@ For containerized deployments (Docker, Kubernetes) where no OS keychain is avail
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` -- for GitHub OAuth
 - `CYBERARK_TENANT_URL` / `CYBERARK_CLIENT_ID` / `CYBERARK_CLIENT_SECRET` -- for CyberArk Identity OAuth
 - `OAUTH_CLIENT_ID` / `OAUTH_CLIENT_SECRET` / `OAUTH_AUTH_URL` / `OAUTH_TOKEN_URL` -- for custom OAuth
+- `ALLOWED_EMAILS` / `ALLOWED_EMAIL_DOMAINS` / `ALLOWED_GITHUB_USERS` -- authorization allow-list, **required** in HTTP mode (see [Authorization Allow-list](#authorization-allow-list-http-mode))
 
 **Important:** When using ENV vars, ensure your deployment platform encrypts environment variables at rest (Railway, Render, and Fly.io all do this by default).
 
@@ -56,6 +57,20 @@ Requirements and behavior (as of 0.3.0):
 - **Refuse, don't drift:** if the keychain is unavailable *and* `ENCRYPTION_KEY` is unset, the server **refuses to start in HTTP/OAuth mode**. Earlier versions silently generated an ephemeral key, which invalidated every stored session on each restart. Stdio mode has no persisted sessions, so it still allows an ephemeral key.
 - **Rotation:** in container deployments, set a new `ENCRYPTION_KEY` and restart. In keychain deployments, delete the `encryption-key` entry under the `lunchmoney-mcp` service in your OS credential manager and restart (a fresh key is generated). Rotating the key invalidates existing encrypted sessions; users re-authenticate on next use. Rotate if you suspect the key was exposed.
 
+### Authorization Allow-list (HTTP mode)
+
+OAuth authentication only proves that a caller holds *an* account at the configured identity provider (Google, GitHub, CyberArk, or a custom OIDC provider). It does **not** prove they are the account owner whose single Lunch Money API token this server uses. Because every authenticated session operates against that one shared token, authentication alone is not enough — without authorization, any IdP account that completes the OAuth flow would gain full read/write/delete access to the owner's financial data.
+
+HTTP mode therefore requires an explicit authorization allow-list, and the server **refuses to start** if none is configured (fail closed). Set at least one of:
+
+- `ALLOWED_EMAILS` -- comma-separated list of exact, **verified** emails (e.g. `you@example.com,partner@example.com`). Matches Google/CyberArk/custom OIDC `email` claims and GitHub verified primary emails. Unverified emails are always rejected.
+- `ALLOWED_EMAIL_DOMAINS` -- comma-separated domains (e.g. `example.com`). Matches the domain of a verified email and Google Workspace `hd` (hosted-domain) claims. Use only for domains you control.
+- `ALLOWED_GITHUB_USERS` -- comma-separated GitHub logins (e.g. `octocat`). Used with `AUTH_PROVIDER=github`.
+
+A caller is admitted only if their resolved identity matches an entry. Any authenticated-but-unlisted caller is rejected with a generic "access denied" error (the rejected email is never echoed back). Identity is resolved server-side from the upstream OIDC `idToken` (Google/CyberArk/custom) or the GitHub API (GitHub); if identity cannot be established, the request fails closed.
+
+Stdio mode is unaffected — it is a single-user local transport with no network exposure and no OAuth.
+
 ## Threat Model
 
 | Threat | Mitigation |
@@ -66,7 +81,7 @@ Requirements and behavior (as of 0.3.0):
 | Token in chat history (configureLunchMoneyToken) | Optional -- users can use `npx lunchmoney-mcp setup` CLI instead |
 | ENV var exposure in containers | Use platform-provided secret management; never log ENV vars |
 | Man-in-the-middle on API calls | All API calls use HTTPS; the OAuth flow uses PKCE (see note below) |
-| Unauthorized MCP access (HTTP mode) | OAuth 2.1 with PKCE required for all authenticated endpoints (see note below) |
+| Unauthorized MCP access (HTTP mode) | OAuth 2.1 with PKCE authenticates the caller; an authorization allow-list (see below) then restricts access to approved accounts. The server refuses to start in HTTP mode without an allow-list. |
 | Silent/phishing OAuth grant | Consent required on every first-time grant (Google consent screen not suppressed) |
 | Lost encryption key in containers | Server refuses to start without a valid `ENCRYPTION_KEY` in HTTP/OAuth mode (no silent ephemeral key) |
 

@@ -7,6 +7,13 @@ services:
     environment:
       - LUNCH_MONEY_API_TOKEN=${LUNCH_MONEY_API_TOKEN}
       - AUTH_PROVIDER=${AUTH_PROVIDER:-google}
+      # Authorization allow-list (REQUIRED in HTTP mode — the server refuses to
+      # start without one). OAuth only authenticates the caller; this restricts
+      # access to your own account. Set at least one of ALLOWED_EMAILS,
+      # ALLOWED_EMAIL_DOMAINS, or ALLOWED_GITHUB_USERS (comma-separated).
+      - ALLOWED_EMAILS=${ALLOWED_EMAILS}
+      - ALLOWED_EMAIL_DOMAINS=${ALLOWED_EMAIL_DOMAINS}
+      - ALLOWED_GITHUB_USERS=${ALLOWED_GITHUB_USERS}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - BASE_URL=${BASE_URL:-http://localhost:8080}

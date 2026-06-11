@@ -9,6 +9,11 @@ import {
 } from "./auth-provider.js";
 import { CredentialStore } from "./credential-store.js";
 import { createSessionStore } from "./session-store.js";
+import {
+  parseAllowlist,
+  isAllowlistConfigured,
+  wrapAuthenticateWithAllowlist,
+} from "./authorization.js";
 import { createRequire } from "module";
 
 export interface CLIOptions {
@@ -93,6 +98,20 @@ async function main() {
       const envConfig = getAuthCredentialsFromEnv(providerType);
       const baseUrl = process.env.BASE_URL || `http://localhost:${options.port}`;
 
+      // Authorization gate: OAuth only proves the caller has *an* account at the
+      // IdP, not that they own this server's Lunch Money token. Require an
+      // explicit allow-list and fail closed when it is missing — otherwise any
+      // authenticated IdP account would gain full access to the owner's finances.
+      const allowlist = parseAllowlist();
+      if (!isAllowlistConfigured(allowlist)) {
+        throw new Error(
+          "HTTP mode requires an authorization allow-list. Set at least one of " +
+            "ALLOWED_EMAILS, ALLOWED_EMAIL_DOMAINS, or ALLOWED_GITHUB_USERS so only " +
+            "authorized accounts can access your Lunch Money data. Refusing to start " +
+            "with OAuth authentication but no authorization."
+        );
+      }
+
       // Create encrypted session store for persisting OAuth tokens across restarts
       const credentialStore = new CredentialStore();
       const tokenStorage = await createSessionStore(credentialStore);
@@ -111,7 +130,9 @@ async function main() {
         encryptionKey: false,
       });
 
-      const server = await createServer({ auth, health: true });
+      const authenticate = wrapAuthenticateWithAllowlist(providerType, auth, allowlist);
+
+      const server = await createServer({ auth, authenticate, health: true });
       await startServer(server, "httpStream", options.port, providerType);
       break;
     }
