@@ -1,6 +1,6 @@
 {
   "name": "@infamousendeavors/lunchmoney-mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The definitive MCP server for Lunch Money — local (stdio) and remote (HTTP) with secure credential storage",
   "type": "module",
   "main": "dist/index.js",

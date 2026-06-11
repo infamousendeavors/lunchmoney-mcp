@@ -1,6 +1,12 @@
 app = "lunchmoney-mcp"
 primary_region = "iad"
 
+# HTTP mode requires an authorization allow-list — the server refuses to start
+# without one. OAuth only authenticates; the allow-list restricts access to your
+# own account. Set at least one as a secret (do NOT commit values here):
+#   fly secrets set ALLOWED_EMAILS=you@example.com
+# Alternatives: ALLOWED_EMAIL_DOMAINS, ALLOWED_GITHUB_USERS (comma-separated).
+
 [build]
 
 [http_service]

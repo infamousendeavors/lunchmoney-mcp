@@ -13,6 +13,12 @@ import { registerAssetTools } from "./tools/assets.js";
 import { registerPlaidTools } from "./tools/plaid.js";
 import { formatErrorForMCP } from "./utils/errors.js";
 import type { User } from "./types/index.js";
+import { createRequire } from "module";
+
+// Single source of truth for the version reported to MCP clients. Reading it
+// from package.json avoids the drift that previously left this hardcoded at an
+// old value while the published package moved on.
+const pkg = createRequire(import.meta.url)("../package.json") as { version: string };
 
 /** Union type for supported auth provider instances */
 export type AuthProviderInstance = InstanceType<typeof GoogleProvider> | InstanceType<typeof GitHubProvider> | InstanceType<typeof OAuthProvider>;
@@ -20,6 +26,13 @@ export type AuthProviderInstance = InstanceType<typeof GoogleProvider> | Instanc
 export interface CreateServerOptions {
   /** OAuth auth provider for HTTP transport mode */
   auth?: AuthProviderInstance;
+  /**
+   * Custom authenticate function. When provided alongside `auth`, it takes
+   * precedence over the provider's default authenticate (FastMCP still derives
+   * its OAuth endpoint config from `auth`). Used to layer the authorization
+   * allow-list on top of OAuth authentication.
+   */
+  authenticate?: (request: unknown) => Promise<unknown>;
   /** Enable health endpoint (default: true when using HTTP transport) */
   health?: boolean;
 }
@@ -66,7 +79,7 @@ export async function createServer(options?: CreateServerOptions): Promise<FastM
 
   const serverConfig: Record<string, unknown> = {
     name: "Lunch Money MCP",
-    version: "0.1.0",
+    version: pkg.version,
     instructions:
       "This MCP server provides full integration with the Lunch Money API. " +
       "You can manage user accounts, categories, tags, transactions, recurring items, budgets, and assets. " +
@@ -76,6 +89,13 @@ export async function createServer(options?: CreateServerOptions): Promise<FastM
   // Add auth provider if specified (for HTTP transport with OAuth)
   if (options?.auth) {
     serverConfig.auth = options.auth;
+  }
+
+  // Layer a custom authenticate function (authorization allow-list gate) on top
+  // of the OAuth provider. FastMCP gives `authenticate` precedence over the
+  // provider's default while still wiring OAuth endpoints from `auth`.
+  if (options?.authenticate) {
+    serverConfig.authenticate = options.authenticate;
   }
 
   // Enable health endpoint (useful for HTTP transport)

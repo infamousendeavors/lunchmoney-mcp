@@ -95,7 +95,7 @@
       <!-- Left: Copy -->
       <div class="hero__copy">
         <div class="hero__eyebrow">
-          <span class="hero__badge" id="version-badge">v0.2.0</span>
+          <span class="hero__badge" id="version-badge">v0.4.0</span>
           <span class="hero__badge-dot" aria-hidden="true"></span>
           <span class="sr-only">Active project</span>
         </div>
@@ -1195,7 +1195,7 @@
               </tr>
               <tr>
                 <td data-label="Threat">Unauthorized remote access</td>
-                <td data-label="Mitigation">OAuth PKCE flow required for HTTP transport; unauthenticated requests rejected</td>
+                <td data-label="Mitigation">OAuth PKCE authenticates the caller; a required authorization allow-list (ALLOWED_EMAILS / ALLOWED_EMAIL_DOMAINS / ALLOWED_GITHUB_USERS) then restricts access to approved accounts. HTTP mode refuses to start without one.</td>
                 <td data-label="Status"><span class="threat-badge threat-badge--mitigated">Mitigated</span></td>
               </tr>
               <tr>

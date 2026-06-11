@@ -74,11 +74,15 @@ export GOOGLE_CLIENT_ID="..."
 export GOOGLE_CLIENT_SECRET="..."
 export BASE_URL="https://your-domain.com"
 
+# Authorization allow-list (REQUIRED in HTTP mode — see Authentication below).
+# Only these accounts may access your data; the server refuses to start without it.
+export ALLOWED_EMAILS="you@example.com"
+
 # Start the server
 lunchmoney-mcp --http --port 8080
 ```
 
-HTTP mode requires OAuth 2.1 for authentication. See [Authentication](#authentication) below.
+HTTP mode requires OAuth 2.1 for authentication **and** an authorization allow-list. See [Authentication](#authentication) below.
 
 ### Environment Variable Fallback
 
@@ -92,6 +96,20 @@ lunchmoney-mcp
 ## Authentication
 
 HTTP mode supports four OAuth providers. Set `AUTH_PROVIDER` and the corresponding credentials:
+
+> **Authorization is required, not optional.** OAuth only proves a caller has an account at the provider — it does not prove they are *you*. Since every session shares your single Lunch Money token, you must also set an allow-list (below) so only approved accounts get in. The server refuses to start in HTTP mode without one.
+
+### Authorization allow-list (required)
+
+Set at least one of the following. A caller is admitted only if their verified identity matches an entry:
+
+```bash
+ALLOWED_EMAILS=you@example.com,partner@example.com   # exact verified emails
+ALLOWED_EMAIL_DOMAINS=example.com                    # verified-email domain / Google Workspace hd
+ALLOWED_GITHUB_USERS=octocat                         # GitHub logins (AUTH_PROVIDER=github)
+```
+
+Unverified emails are always rejected. Authenticated callers not on the list get a generic "access denied". Identity is resolved server-side from the OIDC `idToken` (Google/CyberArk/custom) or the GitHub API.
 
 ### Google
 
@@ -142,6 +160,7 @@ docker run -p 8080:8080 \
   -e AUTH_PROVIDER=google \
   -e GOOGLE_CLIENT_ID="..." \
   -e GOOGLE_CLIENT_SECRET="..." \
+  -e ALLOWED_EMAILS="you@example.com" \
   -e BASE_URL="https://your-domain.com" \
   lunchmoney-mcp
 ```
@@ -172,6 +191,7 @@ The included `render.yaml` defines the service as a private worker. Set your env
 fly launch
 fly secrets set LUNCH_MONEY_API_TOKEN="your-token"
 fly secrets set AUTH_PROVIDER=google GOOGLE_CLIENT_ID="..." GOOGLE_CLIENT_SECRET="..."
+fly secrets set ALLOWED_EMAILS="you@example.com"   # required: authorization allow-list
 fly deploy
 ```
 
